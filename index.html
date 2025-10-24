@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kızılay İlk Yardım Test Platformu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --kizilay-red: #d32f2f; --kizilay-dark: #b71c1c; }
+        .kizilay-bg { background: linear-gradient(135deg, var(--kizilay-red), var(--kizilay-dark)); }
+        /* ... (tüm CSS stilleri buraya) ... */
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark kizilay-bg">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Turkish_Red_Crescent_logo.svg/1200px-Turkish_Red_Crescent_logo.svg.png" alt="Kızılay" height="40" class="me-2">
+                Kızılay İlk Yardım Test Platformu
+            </a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="kizilay-bg text-white py-5">
+        <div class="container py-5">
+            <h1 class="display-4 fw-bold mb-4">İlk Yardım Bilginizi Test Edin</h1>
+            <button class="btn btn-light btn-lg" onclick="startQuickTest()">
+                <i class="fas fa-bolt"></i> Hızlı Test
+            </button>
+        </div>
+    </section>
+
+    <!-- TEST BÖLÜMÜ -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Test Türleri</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100" onclick="startTest('general', 10)">
+                        <div class="card-body text-center p-4">
+                            <i class="fas fa-globe fa-3x text-primary mb-3"></i>
+                            <h4>Genel Test</h4>
+                            <p>10 soru - 15 dakika</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Diğer kartlar... -->
+            </div>
+        </div>
+    </section>
+
+    <!-- TEST ARAYÜZÜ (Gizli) -->
+    <section id="test-interface" class="py-5" style="display: none;">
+        <div class="container">
+            <div class="card">
+                <div class="card-body">
+                    <h4 id="questionText">Soru buraya gelecek</h4>
+                    <div id="optionsContainer"></div>
+                    <button class="btn btn-primary mt-3" onclick="nextQuestion()">Sonraki Soru</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Tüm JavaScript kodları buraya
+        const questions = [
+            {
+                id: 1,
+                question_text: "İlk yardımın tanımı nedir?",
+                option_a: "Hastanede yapılan müdahale",
+                option_b: "Olay yerinde ilaç vererek müdahale", 
+                option_c: "Hekimler tarafından yapılan müdahale",
+                option_d: "Olay yerinde ilaçsız olarak yapılan müdahale",
+                correct_answer: "D",
+                explanation: "İlk yardım ilaçsız olarak yapılır."
+            }
+            // Diğer sorular...
+        ];
+
+        let currentTest = { questions: [], currentIndex: 0 };
+
+        function startTest(type, count) {
+            currentTest.questions = questions.slice(0, count);
+            document.getElementById('test-interface').style.display = 'block';
+            loadQuestion(0);
+        }
+
+        function startQuickTest() {
+            startTest('general', 5);
+        }
+
+        function loadQuestion(index) {
+            const question = currentTest.questions[index];
+            document.getElementById('questionText').textContent = question.question_text;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            ['A', 'B', 'C', 'D'].forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'btn btn-outline-primary w-100 mb-2';
+                button.textContent = `${option}) ${question['option_' + option.toLowerCase()]}`;
+                button.onclick = () => selectOption(option);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectOption(option) {
+            alert(`Seçiminiz: ${option}`);
+        }
+
+        function nextQuestion() {
+            if (currentTest.currentIndex < currentTest.questions.length - 1) {
+                currentTest.currentIndex++;
+                loadQuestion(currentTest.currentIndex);
+            } else {
+                alert('Test tamamlandı!');
+            }
+        }
+    </script>
+</body>
+</html>
