@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kızılay İlk Yardım - Profesyonel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --kizilay-red: #d32f2f;
+            --kizilay-dark: #b71c1c;
+        }
+        .kizilay-bg { background: linear-gradient(135deg, var(--kizilay-red), var(--kizilay-dark)); }
+        .hero-section { min-height: 80vh; display: flex; align-items: center; }
+        .feature-card { transition: transform 0.3s; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .feature-card:hover { transform: translateY(-5px); }
+        .option-btn { width: 100%; text-align: left; margin: 5px 0; padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; }
+        .option-btn:hover { border-color: var(--kizilay-red); }
+        .option-btn.selected { background: var(--kizilay-red); color: white; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark kizilay-bg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-plus-circle"></i> Kızılay İlk Yardım AI
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="kizilay-bg text-white">
+        <div class="container hero-section">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold">AI Destekli İlk Yardım Eğitimi</h1>
+                    <p class="lead">Yapay zeka ile gelişmiş ilk yardım testleri ve anlız soru-cevap</p>
+                    <div class="d-flex gap-3 mt-4">
+                        <button class="btn btn-light btn-lg" onclick="startTest()">
+                            <i class="fas fa-play"></i> Teste Başla
+                        </button>
+                        <button class="btn btn-outline-light btn-lg" onclick="showAI()">
+                            <i class="fas fa-robot"></i> AI Asistan
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <i class="fas fa-brain fa-10x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Section -->
+    <section id="testSection" class="py-5" style="display: none;">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between">
+                            <h5 id="questionCategory">Genel İlk Yardım</h5>
+                            <span class="badge bg-primary" id="questionCounter">1/5</span>
+                        </div>
+                        <div class="card-body">
+                            <h4 id="questionText" class="mb-4">Soru yükleniyor...</h4>
+                            <div id="optionsContainer"></div>
+                            <div class="mt-4">
+                                <button class="btn btn-primary" onclick="nextQuestion()" id="nextBtn">Sonraki</button>
+                                <button class="btn btn-success" onclick="finishTest()" id="finishBtn" style="display: none;">Bitir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Assistant -->
+    <section id="aiSection" class="py-5 bg-light" style="display: none;">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4><i class="fas fa-robot"></i> Kızılay AI Asistan</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="chatMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px;">
+                                <div class="alert alert-info">
+                                    <strong>Asistan:</strong> Merhaba! İlk yardım hakkında sorularınızı sorun.
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="messageInput" class="form-control" placeholder="Sorunuzu yazın...">
+                                <button class="btn btn-primary" onclick="sendMessage()">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        let currentTest = { questions: [], currentIndex: 0, answers: [] };
+
+        // Test başlat
+        async function startTest() {
+            try {
+                const response = await fetch('/api/questions?limit=5');
+                currentTest.questions = await response.json();
+                currentTest.currentIndex = 0;
+                currentTest.answers = [];
+                
+                document.getElementById('testSection').style.display = 'block';
+                document.getElementById('aiSection').style.display = 'none';
+                loadQuestion(0);
+                
+            } catch (error) {
+                alert('Test yüklenirken hata oluştu.');
+            }
+        }
+
+        // Soru yükle
+        function loadQuestion(index) {
+            const question = currentTest.questions[index];
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('questionCategory').textContent = question.category;
+            document.getElementById('questionCounter').textContent = `${index + 1}/${currentTest.questions.length}`;
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, i) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => selectAnswer(i);
+                optionsContainer.appendChild(button);
+            });
+            
+            // Butonları güncelle
+            document.getElementById('nextBtn').style.display = index < currentTest.questions.length - 1 ? 'block' : 'none';
+            document.getElementById('finishBtn').style.display = index === currentTest.questions.length - 1 ? 'block' : 'none';
+        }
+
+        // Cevap seç
+        function selectAnswer(answerIndex) {
+            currentTest.answers[currentTest.currentIndex] = answerIndex;
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        // Sonraki soru
+        function nextQuestion() {
+            if (currentTest.currentIndex < currentTest.questions.length - 1) {
+                currentTest.currentIndex++;
+                loadQuestion(currentTest.currentIndex);
+            }
+        }
+
+        // Testi bitir
+        function finishTest() {
+            let correct = 0;
+            currentTest.questions.forEach((q, i) => {
+                if (currentTest.answers[i] === q.correct) correct++;
+            });
+            
+            alert(`Test tamamlandı! ${correct}/${currentTest.questions.length} doğru`);
+            document.getElementById('testSection').style.display = 'none';
+        }
+
+        // AI Asistan
+        function showAI() {
+            document.getElementById('testSection').style.display = 'none';
+            document.getElementById('aiSection').style.display = 'block';
+        }
+
+        // Mesaj gönder
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML += `<div class="alert alert-secondary"><strong>Siz:</strong> ${message}</div>`;
+            input.value = '';
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const data = await response.json();
+                chatMessages.innerHTML += `<div class="alert alert-info"><strong>Asistan:</strong> ${data.response}</div>`;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+            } catch (error) {
+                chatMessages.innerHTML += `<div class="alert alert-danger"><strong>Asistan:</strong> Bağlantı hatası</div>`;
+            }
+        }
+
+        // Enter tuşu
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
